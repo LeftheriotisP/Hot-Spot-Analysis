@@ -117,6 +117,7 @@ class Grid:
         if not flag:
             print('Did not find any hotspots')
         '''
+    '''
     #calculate the mean of the dataset
     def calculate_mean(self):
         total_counts = sum(cell.count for row in self.cells for col in row for cell in col)
@@ -130,32 +131,94 @@ class Grid:
         else:
             return 0
         
-    #calculate variance for getis-ord
-    def calculate_standard_deviation(self):
+        #calculate variance for getis-ord
+        def calculate_standard_deviation(self):
 
-        #make a list with all the counts
-        total_counts = [cell.count for row in self.cells for col in row for cell in col]   
-        total_cells = self.m * self.n * self.k
+            #make a list with all the counts
+            total_counts = [cell.count for row in self.cells for col in row for cell in col]   
+            total_cells = self.m * self.n * self.k
 
-        #mean of all counts
-        mean = sum(total_counts) / total_cells
-        print("Mean in standard deviation is=", mean)
+            #mean of all counts
+            mean = sum(total_counts) / total_cells
+            print("Mean in standard deviation is=", mean)
 
-        #mean of the squares of all counts using the list of counts
-        mean_of_squares = sum(count ** 2 for count in total_counts) / total_cells
-        print("Square Mean in standard deviation is=", mean_of_squares)
-        variance = mean_of_squares - (mean ** 2)
-        standard_deviation = np.sqrt(variance)
-        return standard_deviation
-
+            #mean of the squares of all counts using the list of counts
+            mean_of_squares = sum(count ** 2 for count in total_counts) / total_cells
+            print("Square Mean in standard deviation is=", mean_of_squares)
+            variance = mean_of_squares - (mean ** 2)
+            standard_deviation = np.sqrt(variance)
+            return standard_deviation
+        '''
     #calculate getis-ord statistic for each cell
     def calculate_getis_ord(self):
+        #loop for cell i
         for x in range(self.m):
             for y in range(self.n):
                 for t in range(self.k):
-                    cell = self.cells[x][y][t]
+                    cell_i = self.cells[x][y][t]
+                    #initializing sums
+                    weight_sum = 0 
+                    squared_weight_sum = 0
+                    weighted_count_sum = 0
+                    counts_sum = 0 
+                    squared_counts_sum = 0
                     
-                    #prepei na ypologizw to w gia ola me kentro to Ci 
+                    #loop for cell j
+                    for b in range(self.m):
+                        for c in range(self.n):
+                            for d in range(self.k):
+                                if (b, c, d) != (x, y, t):  #if cell i != cell j
+                                    cell_j = self.cells[b][c][d]
+
+                                    # Calculate the distance from the reference cell
+
+                                    distance_x = abs(x - b)
+                                    distance_y = abs(y - c)
+                                    distance_t = abs(t - d)
+
+                                    # Calculate the maximum distance
+                                    max_distance = max(distance_x, distance_y, distance_t)
+                                    
+                                    #calculating weight i,j
+                                    weight = 2 ** (1 - max_distance)
+                                    
+                                    #calculating sum of weights 
+                                    weight_sum += weight
+                                    
+                                    #calculating sum of squared weights 
+                                    squared_weight_sum += weight ** 2
+                                    
+                                    # Multiply the weight by the count score of cell j
+                                    weighted_count = weight * cell_j.count
+
+                                    # Add the weighted count to the sum for cell i
+                                    weighted_count_sum += weighted_count
+
+                                    counts_sum += cell_j.count
+                                    squared_counts_sum += cell_j.count ** 2
+                                    
+                    #loop end                
+                    total_cells = self.m * self.n * self.k
+                    #calculate mean
+                    mean = counts_sum / total_cells
+
+                    #calculate standard deviation
+                    standard_deviation = np.sqrt((squared_counts_sum/total_cells) - (mean ** 2))
+                    getis_ord_numerator = (weighted_count_sum - (mean * weight_sum))
+                    getis_ord_denominator = (standard_deviation * np.sqrt(((total_cells * squared_weight_sum) - (weight_sum ** 2)) /(total_cells - 1)) )
+                    cell_i.getis_ord = getis_ord_numerator / getis_ord_denominator
+                    if (x, y, t) == (0, 0, 0):
+                        # Print intermediate calculations
+                        print(f"Intermediate calculations for Cell[{x}][{y}][{t}]:")
+                        print(f"Weight sum: {weight_sum}")
+                        print(f"Squared weight sum: {squared_weight_sum}")
+                        print(f"Weighted count sum: {weighted_count_sum}")
+                        print(f"Counts sum: {counts_sum}")
+                        print(f"Squared counts sum: {squared_counts_sum}")
+                        print(f"Mean: {mean}")
+                        print(f"Standard deviation: {standard_deviation}")
+
+                    print(f"Getis-Ord statistic for Cell[{x}][{y}][{t}]: {cell_i.getis_ord}")
 
 
         
@@ -195,7 +258,7 @@ def read_data_from_file(filename):
     return data
 
 
-filename = 'GeoDataS.txt'   #file that contains the dataset
+filename = 'GeoDataSmall.txt'   #file that contains the dataset
 point_data = read_data_from_file(filename)
 
 # Calculate the number of entries
@@ -216,11 +279,14 @@ k = int(input("Enter the number of layers you want to have: "))
 # Create the Grid
 grid = Grid(min_x, max_x, min_y, max_y, min_t, max_t, m, n, k, point_data)  
 if grid:
-    print("Grid created successfully.")
-    #call the calculate_mean and print result
-    mean_value = grid.calculate_mean()
-    print("Mean of the dataset:", mean_value)
-    standard_deviation = grid.calculate_standard_deviation()
-    print("Standard Deviation:", standard_deviation)
+    grid.calculate_getis_ord()
+    """
+        print("Grid created successfully.")
+        #call the calculate_mean and print result
+        mean_value = grid.calculate_mean()
+        print("Mean of the dataset:", mean_value)
+        standard_deviation = grid.calculate_standard_deviation()
+        print("Standard Deviation:", standard_deviation)
+    """
 else:
     print("Grid creation failed.")
