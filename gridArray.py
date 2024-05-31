@@ -1,5 +1,5 @@
 import numpy as np
-
+import time
 
 class Cell: #Cell class consists of the borders of the cell and the number of points inside the cell
     def __init__(self, min_x, max_x, min_y, max_y, min_t, max_t, count=0):
@@ -55,16 +55,27 @@ class Grid:
         ]
         
         self.find_points(data)  # Calls the find_points method
-        print("Grid after processing data:")
+        print("\nProcessing grid")
+        
+        '''
+        #Printing cells for testing
         for x in range(self.m):
             for y in range(self.n):
                 for t in range(self.k):
                     cell = self.cells[x][y][t]
                     print(f"Cell[{x}][{y}][{t}]: (xmin={cell.min_x}, xmax={cell.max_x}, ymin={cell.min_y}, ymax={cell.max_y}, tmin={cell.min_t}, tmax={cell.max_t}, count={cell.count})")
+        '''         
+            
+    def find_points(self, data):    # Finds the points based on the data and adds them to the count of the cell they are in
+        for x, y, t in data:
+            # print(f"Processing point ({x}, {y}, {t})")
+            cell = self.findCell(x, y, t) # Calls the findCell method
+            if cell:
+                cell.count += 1
+            else:
+                print("Couldn't update count")
 
-        self.find_hotspot() # Calls the find_hotspot method that uses 90%
-
-    def findCell(self, x, y, t):   # findCell is a method that returns the cell that x and y belongs to
+    def findCell(self, x, y, t):   # findCell returns the cell that x, y, t belongs to
         col = int((x - self.min_x) / (self.max_x - self.min_x) * self.m) # (x-x_min)/x_step
         row = int((y - self.min_y) / (self.max_y - self.min_y) * self.n) # (y-y_min)/y_step
         layer = int((t - self.min_t) / (self.max_t - self.min_t) * self.k)  # (t-t_min)/t_step
@@ -80,30 +91,24 @@ class Grid:
             return self.cells[col][row][layer]
         else:
             print("Couldn't find cell")
-
-    def find_points(self, data):    # Finds the points based on the data and adds them to the count of the cell they are in
-        for x, y, t in data:
-            # print(f"Processing point ({x}, {y}, {t})")
-
-            cell = self.findCell(x, y, t) # Calls the findCell method
-            if cell:
-                cell.count += 1
-            else:
-                print("Couldn't update count")
+        
     
-    #Calculate hot-spot with 90-th percentile     
-    def find_hotspot(self):         
+    #----Calculate hot-spot with 90-th percentile----     
+    def find_hotspot(self, file):         
         # Extract cell counts from cells
         cell_counts = [cell.count for row in self.cells for col in row for cell in col if cell.count != 0]
         
-        # Print cell counts in ascending order 
-        print("Cell Counts in ascending order:", sorted(cell_counts))
-        '''
+        #Print cell counts in ascending order 
+        #print("Cell Counts in ascending order:", sorted(cell_counts))
+        
         # Calculate the 90th percentile
-        #percentile_90 = np.percentile(cell_counts, 90)
+        percentile_90 = np.percentile(cell_counts, 90)
+
+        #Write the 90th percentile in text file
+        file.write(f"90th-percentile: {percentile_90}\n")
 
         #print("90th-percentile:", percentile_90)
-
+        print("\n90th-percentile calculated succefully")
         
         # Find hotspots based on the 90th percentile
         flag = False
@@ -112,113 +117,96 @@ class Grid:
                 for t in range(self.k):
                     cell = self.cells[x][y][t]
                     if cell.count > percentile_90:
-                        print(f'Concentration found at Cell[{x}][{y}][{t}]: count={cell.count}')
+                        #print(f'Concentration found at Cell[{x}][{y}][{t}]: count={cell.count}') #Print for testing
+
+                        #Write hot spots from 90th percentile on text file
+                        file.write(f'Hot spot at ({x},{y},{t}): count={cell.count}\n')
+
                         flag = True
         if not flag:
-            print('Did not find any hotspots')
-        '''
-    '''
-    #calculate the mean of the dataset
-    def calculate_mean(self):
-        total_counts = sum(cell.count for row in self.cells for col in row for cell in col)
+            print('Did not find any hotspots')  
+
+    #----Calculate getis-ord statistic for each cell----
+    def calculate_getis_ord(self, file):
+
+        a = int(input("\nEnter the value of parameter a: "))
+
+        # Calculate mean and standard deviation
         total_cells = self.m * self.n * self.k
+        #print(f"total cells: {total_cells}")
+        counts_sum = 0
+        squared_counts_sum = 0
+    
+        # Loop through all cells
+        for x in range(self.m):
+            for y in range(self.n):
+                for t in range(self.k):
+                    cell = self.cells[x][y][t]
+                    counts_sum += cell.count
+                    squared_counts_sum += cell.count ** 2
 
-        #printing total_counts and total_cells for testing
-        print('total_counts=', total_counts, 'total_cells=', total_cells)
-        
-        if total_cells > 0:
-            return total_counts / total_cells
-        else:
-            return 0
-        
-        #calculate variance for getis-ord
-        def calculate_standard_deviation(self):
+        #print(f"counts_sum: {counts_sum}") #Prints for testing
+        #print(f"squared_counts_sum: {squared_counts_sum}")
 
-            #make a list with all the counts
-            total_counts = [cell.count for row in self.cells for col in row for cell in col]   
-            total_cells = self.m * self.n * self.k
+        # Calculate mean
+        mean = counts_sum / total_cells
+    
+        # Calculate standard deviation
+        standard_deviation = np.sqrt((squared_counts_sum / total_cells) - (mean ** 2))
+ 
+        # Writing a header in the text file
+        file.write('\nCell Coordinates\tGetis-Ord Statistic\n')
 
-            #mean of all counts
-            mean = sum(total_counts) / total_cells
-            print("Mean in standard deviation is=", mean)
-
-            #mean of the squares of all counts using the list of counts
-            mean_of_squares = sum(count ** 2 for count in total_counts) / total_cells
-            print("Square Mean in standard deviation is=", mean_of_squares)
-            variance = mean_of_squares - (mean ** 2)
-            standard_deviation = np.sqrt(variance)
-            return standard_deviation
-        '''
-    #calculate getis-ord statistic for each cell
-    def calculate_getis_ord(self):
-        #loop for cell i
+        #Loop for cell i
         for x in range(self.m):
             for y in range(self.n):
                 for t in range(self.k):
                     cell_i = self.cells[x][y][t]
-                    #initializing sums
+
+                    #Initializing sums
                     weight_sum = 0 
                     squared_weight_sum = 0
                     weighted_count_sum = 0
                     counts_sum = 0 
                     squared_counts_sum = 0
-                    
-                    #loop for cell j
+
+                    #Loop for cell j
                     for b in range(self.m):
                         for c in range(self.n):
                             for d in range(self.k):
-                                if (b, c, d) != (x, y, t):  #if cell i != cell j
                                     cell_j = self.cells[b][c][d]
 
-                                    # Calculate the distance from the reference cell
+                                    #Calculate the distance cell i from cell j
 
                                     distance_x = abs(x - b)
                                     distance_y = abs(y - c)
                                     distance_t = abs(t - d)
 
-                                    # Calculate the maximum distance
+                                    #Calculate the maximum distance
                                     max_distance = max(distance_x, distance_y, distance_t)
-                                    
-                                    #calculating weight i,j
-                                    weight = 2 ** (1 - max_distance)
-                                    
-                                    #calculating sum of weights 
+
+                                    #Calculating weight i,j (w=a^1-r, a>1 , r=distance i,j)
+                                    weight = a ** (1 - max_distance)
+
+                                    #Calculating sum of weights 
                                     weight_sum += weight
-                                    
-                                    #calculating sum of squared weights 
+
+                                    #Calculating sum of squared weights 
                                     squared_weight_sum += weight ** 2
-                                    
+
                                     # Multiply the weight by the count score of cell j
                                     weighted_count = weight * cell_j.count
 
                                     # Add the weighted count to the sum for cell i
                                     weighted_count_sum += weighted_count
 
-                                    counts_sum += cell_j.count
-                                    squared_counts_sum += cell_j.count ** 2
-                                    
-                    #loop end                
-                    total_cells = self.m * self.n * self.k
-                    #calculate mean
-                    mean = counts_sum / total_cells
+                    #Loop end                                   
+                    #Final calculation of getis-ord
+                    cell_i.getis_ord = (weighted_count_sum - (mean * weight_sum)) / (standard_deviation * np.sqrt(((total_cells * squared_weight_sum) - (weight_sum ** 2)) /(total_cells - 1)) )
 
-                    #calculate standard deviation
-                    standard_deviation = np.sqrt((squared_counts_sum/total_cells) - (mean ** 2))
-                    getis_ord_numerator = (weighted_count_sum - (mean * weight_sum))
-                    getis_ord_denominator = (standard_deviation * np.sqrt(((total_cells * squared_weight_sum) - (weight_sum ** 2)) /(total_cells - 1)) )
-                    cell_i.getis_ord = getis_ord_numerator / getis_ord_denominator
-                    if (x, y, t) == (0, 0, 0):
-                        # Print intermediate calculations
-                        print(f"Intermediate calculations for Cell[{x}][{y}][{t}]:")
-                        print(f"Weight sum: {weight_sum}")
-                        print(f"Squared weight sum: {squared_weight_sum}")
-                        print(f"Weighted count sum: {weighted_count_sum}")
-                        print(f"Counts sum: {counts_sum}")
-                        print(f"Squared counts sum: {squared_counts_sum}")
-                        print(f"Mean: {mean}")
-                        print(f"Standard deviation: {standard_deviation}")
-
-                    print(f"Getis-Ord statistic for Cell[{x}][{y}][{t}]: {cell_i.getis_ord}")
+                    print(f"Getis-Ord statistic for Cell[{x}][{y}][{t}]: {cell_i.getis_ord}") #Print for testing
+                    file.write(f"({x},{y},{t})\t{cell_i.getis_ord}\n")
+        print("\nGetis-Ord calculated succefully")
 
 
         
@@ -242,7 +230,7 @@ def find_min_max(data): # Finds the min and max values for x, y and t in the dat
         min_t = min(min_t, t)
         max_t = max(max_t, t)
 
-    # print("In the find_min_max method:")
+
     print(f"Minimum X: {min_x}, Maximum X: {max_x}")
     print(f"Minimum Y: {min_y}, Maximum Y: {max_y}")  
     print(f"Minimum T: {min_t}, Maximum T: {max_t}")  
@@ -250,15 +238,16 @@ def find_min_max(data): # Finds the min and max values for x, y and t in the dat
 
 def read_data_from_file(filename):
     data = []
-    with open(filename, 'r') as file:
+    with open(filename, 'r') as file: # open filename in read mode
         for line in file:
-            # Parse each line as a tuple directly
-            point = eval(line.strip())  # Safely evaluates a string containing a Python expression
+            # Parse each line as a tuple 
+            point = eval(line.strip()) 
             data.append(point)
     return data
 
 
-filename = 'GeoDataSmall.txt'   #file that contains the dataset
+
+filename = 'GeoDataS.txt'   # file that contains the dataset
 point_data = read_data_from_file(filename)
 
 # Calculate the number of entries
@@ -270,23 +259,34 @@ min_x, max_x, min_y, max_y, min_t, max_t = find_min_max(point_data)
 
 
 # Ask user for the number of splits
-m = int(input("Enter the number of columns you want to have: "))
+m = int(input("\nEnter the number of columns: "))
 
-n = int(input("Enter the number of rows you want to have: "))
+n = int(input("\nEnter the number of rows: "))
 
-k = int(input("Enter the number of layers you want to have: "))
+k = int(input("\nEnter the number of layers: "))
+
+# Define the path to the output file
+output_file_path = 'hot_spot_results.txt'
 
 # Create the Grid
 grid = Grid(min_x, max_x, min_y, max_y, min_t, max_t, m, n, k, point_data)  
 if grid:
-    grid.calculate_getis_ord()
-    """
-        print("Grid created successfully.")
-        #call the calculate_mean and print result
-        mean_value = grid.calculate_mean()
-        print("Mean of the dataset:", mean_value)
-        standard_deviation = grid.calculate_standard_deviation()
-        print("Standard Deviation:", standard_deviation)
-    """
+    print("\nGrid created succesfully")
+    with open(output_file_path, 'w') as file:
+        start_time = time.time() #starting timer to time 90th percentile and getis ord
+        
+        grid.find_hotspot(file)
+        grid.calculate_getis_ord(file)
+
+    end_time = time.time()  #end timer
+    execution_time = end_time - start_time
+    #convert time to hours, minutes, and seconds
+    hours = int(execution_time // 3600)
+    minutes = int((execution_time % 3600) // 60)
+    seconds = execution_time % 60
+
+    # Print execution time in a human-readable format
+    print(f"Execution time: {hours} hours, {minutes} minutes, {seconds:.2f} seconds")   
 else:
     print("Grid creation failed.")
+    end_time = time.time()
