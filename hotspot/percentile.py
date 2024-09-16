@@ -1,7 +1,7 @@
 import numpy as np
 def calculate_90th_percentile(grid, file_90th):         
     # Extract cell counts from cells
-    cell_counts = [cell.count for row in grid.cells for col in row for cell in col]
+    cell_counts = [cell.count for row in grid.cells for col in row for cell in col if cell.count != 0]
     
     # Calculate the 90th percentile
     percentile_90 = np.percentile(cell_counts, 90)
