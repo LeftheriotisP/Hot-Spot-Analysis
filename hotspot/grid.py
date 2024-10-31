@@ -1,5 +1,5 @@
 #Cell Class
-class Cell:  # Cell class consists of the borders of the cell and the number of points inside the cell
+class Cell:  #Cell class includes the borders of the cell and the number of points inside the cell
     def __init__(self, min_x, max_x, min_y, max_y, min_t, max_t, count=0):
         self.min_x = min_x
         self.max_x = max_x
@@ -8,7 +8,7 @@ class Cell:  # Cell class consists of the borders of the cell and the number of 
         self.min_t = min_t
         self.max_t = max_t
         self.count = count
-        self.getis_ord = None  # Initialize Getis-Ord statistic
+        self.getis_ord = None  #initialize Getis-Ord statistic
 
 #Grid Class
 class Grid:
@@ -33,7 +33,7 @@ class Grid:
         self.hotspots_90th = []
         self.hotspots_getis_ord = []
 
-        # Calculate the step size for each axis
+        #calculate the step size for each axis
         x_step = (max_x - min_x) / m
         y_step = (max_y - min_y) / n
         t_step = (max_t - min_t) / v
@@ -51,14 +51,14 @@ class Grid:
                     for t in range(v)
                 ]
                 for y in range(n)
-            ]
+            ]   
             for x in range(m)
         ]
         
         self.find_points(data)  # Calls the find_points method
         print("\nProcessing grid")
         
-    def find_points(self, data):  # Finds the points based on the data and adds them to the count of the cell they are in
+    def find_points(self, data):  #Finds the points based on the data and adds them to the count of the cell they are in
         for x, y, t in data:
             cell = self.findCell(x, y, t)  # Calls the findCell method
             if cell:

@@ -2,21 +2,24 @@ import time
 from grid import Grid
 from getis_ord import calculate_getis_ord
 from percentile import calculate_90th_percentile
-from plot import plot_all_hotspots
+from testplot import plot_all_hotspots_at_t #2d plots with map
+from sort90th import sort_90th_file #sort90th
+from sortGetisOrdResults import sort_getis_ord_file #sortGi*
+from jaccard_index import calculate_jaccard_index 
 
 def read_data_from_file(filename):
     data = []
-    with open(filename, 'r') as file:  # open filename in read mode
+    with open(filename, 'r') as file:  #open filename in read mode
         for line in file:
-            point = eval(line.strip()) 
+            point = eval(line.strip()) #create tuple with data and pass it in data list
             data.append(point)
     return data
 
-def find_min_max(data):  # Finds the min and max values for x, y and t in the dataset
+def find_min_max(data):  #Find the min and max values for x, y and t in the dataset
     if not data:
         return print("Data is empty")
 
-    min_x = float('inf')  # Initializing min and max values
+    min_x = float('inf')  #Initializing min and max values
     max_x = float('-inf') 
     min_y = float('inf')
     max_y = float('-inf') 
@@ -24,7 +27,7 @@ def find_min_max(data):  # Finds the min and max values for x, y and t in the da
     max_t = float('-inf')
 
     for x, y, t in data:
-        # Update minimum and maximum values 
+        #Update minimum and maximum values 
         min_x = min(min_x, x)
         max_x = max(max_x, x)
         min_y = min(min_y, y)
@@ -38,7 +41,7 @@ def find_min_max(data):  # Finds the min and max values for x, y and t in the da
     return min_x, max_x, min_y, max_y, min_t, max_t
 
 def main():
-    filename = 'NewGeoDataS.txt'
+    filename = 'Geodata.txt'
     point_data = read_data_from_file(filename)
     
     min_x, max_x, min_y, max_y, min_t, max_t = find_min_max(point_data)
@@ -46,34 +49,65 @@ def main():
     m = int(input("\nEnter the number of columns: "))
     n = int(input("\nEnter the number of rows: "))
     v = int(input("\nEnter the number of layers: "))
-    
+
+    start_time = time.time()
+    start_grid_time = time.time()
+
     grid = Grid(min_x, max_x, min_y, max_y, min_t, max_t, m, n, v, point_data)
+    
+    end_grid_time = time.time()
+    grid_creation_time = end_grid_time - start_grid_time
     
     if grid:
         print("\nGrid created successfully")
         output_file_90th = '90th_percentile_results.txt'
         output_file_GetisOrd = 'getis_ord_results.txt'
         
-        start_time = time.time()
         
-        # Calculate 90th percentile hotspots
+
+        #Calculate 90th percentile hotspots
+        percentile_start_time = time.time()
         with open(output_file_90th, 'w') as file_90th:
             calculate_90th_percentile(grid, file_90th)
+        percentile_end_time = time.time()
+        percentile_execution_time = percentile_end_time - percentile_start_time
         
-        # Calculate Getis-Ord hotspots
+        #Calculate Getis-Ord hotspots
+        getis_ord_start_time = time.time()
         with open(output_file_GetisOrd, 'w') as file_GetisOrd:
             calculate_getis_ord(grid, file_GetisOrd)
+        getis_ord_end_time = time.time()
+        getis_ord_execution_time = getis_ord_end_time - getis_ord_start_time
         
         end_time = time.time()
-        execution_time = end_time - start_time
-        hours = int(execution_time // 3600)
-        minutes = int((execution_time % 3600) // 60)
-        seconds = execution_time % 60
 
-        print(f"Execution time: {hours} hours, {minutes} minutes, {seconds:.2f} seconds")
-        
-        # Plotting hotspots
-        plot_all_hotspots(grid)
+        #sort 90th results
+        input_sort_90th = '90th_percentile_results.txt'
+        output_sort_90th = 'sorted_90th_percentile_results.txt'
+        sort_90th_file(input_sort_90th, output_sort_90th)
+
+        #sortGi* results
+        input_filename = 'getis_ord_results.txt'
+        output_filename = 'sorted_getis_ord_results.txt'
+        sort_getis_ord_file(input_filename, output_filename)
+
+        #calculate jaccard index for 90th and Gi*
+        calculate_jaccard_index()
+
+        execution_time = end_time - start_time
+
+        total_execution_time_ms = execution_time * 1000
+        grid_creation_time_ms = grid_creation_time * 1000
+        percentile_execution_time_ms = percentile_execution_time * 1000
+        getis_ord_execution_time_ms = getis_ord_execution_time * 1000
+
+        print(f"Total execution time: {total_execution_time_ms:.2f} ms")
+        print(f"Grid creation time: {grid_creation_time_ms:.2f} ms")
+        print(f"90th percentile calculation time: {percentile_execution_time_ms:.2f} ms")
+        print(f"Getis-Ord calculation time: {getis_ord_execution_time_ms:.2f} ms")
+               
+        #plot hotspots
+        plot_all_hotspots_at_t(grid)
     else:
         print("Grid creation failed.")
 

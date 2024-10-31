@@ -12,10 +12,6 @@ def plot_90th_hotspots_at_t(grid, t_value):
     min_t = cells[0][0][t_value].min_t
     max_t = cells[0][0][t_value].max_t
 
-    image_path = 'README_nari_dynamic.png'
-    img = plt.imread(image_path)
-    ax.imshow(img, extent=(grid.min_x, grid.max_x, grid.min_y, grid.max_y), aspect='auto')
-
     # Collect data for t = t_value
     for x in range(grid.m):
         for y in range(grid.n):
@@ -126,14 +122,29 @@ def plot_overlap_at_t(grid, t_value):
 # Function to plot all hotspot types at a specific t-value
 def plot_all_hotspots_at_t(grid):
     while True:
-        try:
-            t_value = int(input("\nEnter the value of t: "))
-            if t_value < 0:
-                print("'t' must be positive or 0. Please enter a correct value.")
-            else:
-                break
-        except ValueError:
-            print("Invalid input. Please enter a numeric value for t.")
-    plot_90th_hotspots_at_t(grid, t_value)  # Plot 90th percentile hotspots
-    plot_getis_ord_hotspots_at_t(grid, t_value)  # Plot Getis-Ord hotspots
-    plot_overlap_at_t(grid, t_value)  # Plot overlap
+        #ask if the user wants to see a plot
+        plot_choice = input("Do you want to see a plot? (Y/N): ").strip().upper()
+        
+        if plot_choice == 'Y':
+            # If yes plot
+            while True:
+                try:
+                    t_value = int(input(f"Enter the value of t (0 to {grid.v - 1}): "))
+                    if t_value < 0 or t_value >= grid.v:
+                        print(f"'t' must be between 0 and {grid.v - 1}, please enter a valid value.")
+                    else:
+                        break
+                except ValueError:
+                    print("Invalid input, please enter a valid value for t.")
+            
+            #Call the plotting functions with the validated t_value
+           
+            plot_90th_hotspots_at_t(grid, t_value)       #plot 90th percentile hotspots
+            plot_getis_ord_hotspots_at_t(grid, t_value)  #plot Getis-Ord hotspots
+            plot_overlap_at_t(grid, t_value)             #plot overlap
+        elif plot_choice == 'N':
+            # If no exit
+            print("Exiting the plot viewer.")
+            break
+        else:
+            print("Invalid input, please enter 'Y' or 'N'.")
