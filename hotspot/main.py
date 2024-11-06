@@ -2,16 +2,16 @@ import time
 from grid import Grid
 from getis_ord import calculate_getis_ord
 from percentile import calculate_90th_percentile
-from testplot import plot_all_hotspots_at_t #2d plots with map
-from sort90th import sort_90th_file #sort90th
-from sortGetisOrdResults import sort_getis_ord_file #sortGi*
+from plot import plot_all_hotspots_at_t 
+from sort90th import sort_90th_file 
+from sortGetisOrdResults import sort_getis_ord_file 
 from jaccard_index import calculate_jaccard_index 
 
 def read_data_from_file(filename):
     data = []
     with open(filename, 'r') as file:  #open filename in read mode
         for line in file:
-            point = eval(line.strip()) #create tuple with data and pass it in data list
+            point = eval(line.strip()) 
             data.append(point)
     return data
 
@@ -92,7 +92,7 @@ def main():
         sort_getis_ord_file(input_filename, output_filename)
 
         #calculate jaccard index for 90th and Gi*
-        calculate_jaccard_index()
+        calculate_jaccard_index()   #output jaccard_results.txt
 
         execution_time = end_time - start_time
 

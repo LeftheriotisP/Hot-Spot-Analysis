@@ -95,7 +95,7 @@ def calculate_getis_ord(self, file_GetisOrd):
 
                             # calculating weight i,j (w=a^1-r, a>1 , r=distance i,j)
                             
-                            if max_distance <= k:    #Limiting the influence of further neighbours to gain computational efficiency
+                            if max_distance <= k:    #Limiting the influence of further neighbours
                                 weight = a ** (1 - max_distance)
                             else:
                                 weight = 0 
@@ -116,19 +116,12 @@ def calculate_getis_ord(self, file_GetisOrd):
                 else:
                     #Final Calculation of Getis-Ord
                     cell_i.getis_ord = (weighted_count_sum - (mean * weight_sum)) / denominator
-
-                #print(f"[{x}][{y}][{t}] = {cell_i.getis_ord}")
-                #file_GetisOrd.write(f"({x},{y},{t}) = {cell_i.getis_ord}\n")
                 
                 #if above threshold add to hotspots
-                threshold = 1.96
+                threshold = h
 
                 if cell_i.getis_ord > threshold:
                     file_GetisOrd.write(f"({x},{y},{t}) = {cell_i.getis_ord}\n")
                     self.hotspots_getis_ord.append((x, y, t, cell_i.getis_ord))
-    
-    #prints to detect errors
-    #print(f"this is mean: {mean}")
-    #print(f"this is standard dev:{standard_deviation}")
-    
+       
     print("\nGetis-Ord calculated successfully")
