@@ -14,4 +14,3 @@ p.leftheriotis@gmail.com
 ## Μέθοδοι που χρησιμοποιήθηκαν
 - Getis-Ord Gi*
 - 90th-percentile
-
