@@ -1,5 +1,17 @@
-# Hot-Spot Analysis
+# Hot-Spot Analysis 
 Πτυχιακή εργασία με θέμα "Hot-Spot Analysis"
 
-twodplot and plot are old files
-sort files and jaccard are used for sorting the results in text files and viewing
+## Όνομα Φοιτητή και Α.Μ.
+Παναγιώτης Λευθεριώτης Ε19084
+
+## Επικοινωνία 
+p.leftheriotis@gmail.com
+
+## Χαρακτηριστικά 
+- Χρήση γλώσσας προγραμματισμού Python για την δημιουργία 2D πλέγματος
+- Χρήση χωροχρονικών δεδομένων πλοίων που παρέχονται από την Ναυτιλιακή Ακαδημία της Γαλλίας
+
+## Μέθοδοι που χρησιμοποιήθηκαν
+- Getis-Ord Gi*
+- 90th-percentile
+
